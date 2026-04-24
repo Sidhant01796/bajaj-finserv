@@ -5,16 +5,10 @@ import java.net.http.HttpResponse;
 import java.util.*;
 import java.util.regex.*;
 
-/**
- * Quiz Leaderboard System — Bajaj Finserv Internship Assignment
- *
- * Zero external dependencies — uses only Java 11+ built-in libraries.
- * Compile : javac QuizLeaderboard.java
- * Run     : java QuizLeaderboard
- */
+
 public class QuizLeaderboard {
 
-    // ✅ CHANGE THIS to your actual registration number before running
+    
     private static final String REG_NO = "RA2311003020813";
 
     private static final String BASE_URL  = "https://devapigw.vidalhealthtpa.com/srm-quiz-task";
@@ -25,16 +19,16 @@ public class QuizLeaderboard {
 
         HttpClient client = HttpClient.newHttpClient();
 
-        // Tracks seen events: key = "roundId|participant"
+       
         Set<String>     seenEvents = new HashSet<>();
-        // Accumulates scores: participant → totalScore
+        
         Map<String, Integer> scores = new LinkedHashMap<>();
 
         System.out.println("========================================");
         System.out.println("   Quiz Leaderboard System Starting     ");
         System.out.println("========================================\n");
 
-        // ── Step 1: Poll API 10 times ─────────────────────────────────────
+        
         for (int poll = 0; poll < TOTAL_POLLS; poll++) {
             System.out.printf("[Poll %d/%d] Calling API with poll=%d ...%n",
                     poll + 1, TOTAL_POLLS, poll);
@@ -53,7 +47,7 @@ for (int attempt = 1; attempt <= 5; attempt++) {
         res = client.send(req, HttpResponse.BodyHandlers.ofString());
 
         if (res.statusCode() == 200) {
-            break; // success
+            break; 
         } else {
             System.out.println("  ⚠ HTTP " + res.statusCode() + " (Attempt " + attempt + ")");
         }
@@ -70,7 +64,7 @@ for (int attempt = 1; attempt <= 5; attempt++) {
             if (res.statusCode() != 200) {
                 System.out.println("  ⚠  HTTP " + res.statusCode() + " — " + res.body());
             } else {
-                // ── Step 2: Parse events from JSON response ────────────────
+              
                 List<Event> events = parseEvents(res.body());
                 int fresh = 0, dupes = 0;
 
@@ -78,7 +72,7 @@ for (int attempt = 1; attempt <= 5; attempt++) {
                     String key = e.roundId + "|" + e.participant;
 
                     if (seenEvents.contains(key)) {
-                        // ── Step 3: Skip duplicates ────────────────────────
+                      
                         dupes++;
                     } else {
                         seenEvents.add(key);
@@ -89,14 +83,14 @@ for (int attempt = 1; attempt <= 5; attempt++) {
                 System.out.printf("  ✓  New events: %d | Duplicates skipped: %d%n", fresh, dupes);
             }
 
-            // Mandatory 5-second delay between polls
+       
             if (poll < TOTAL_POLLS - 1) {
                 System.out.println("  Waiting 5 seconds...\n");
                 Thread.sleep(DELAY_MS);
             }
         }
 
-        // ── Step 4: Sort leaderboard by totalScore descending ─────────────
+      
         List<Map.Entry<String, Integer>> leaderboard = new ArrayList<>(scores.entrySet());
         leaderboard.sort((a, b) -> b.getValue() - a.getValue());
 
@@ -112,7 +106,7 @@ for (int attempt = 1; attempt <= 5; attempt++) {
         System.out.println("  Combined Total Score : " + grandTotal);
         System.out.println("========================================\n");
 
-        // ── Step 5: Build JSON payload manually ───────────────────────────
+      
         StringBuilder leaderboardJson = new StringBuilder("[");
         for (int i = 0; i < leaderboard.size(); i++) {
             Map.Entry<String, Integer> e = leaderboard.get(i);
@@ -130,7 +124,7 @@ for (int attempt = 1; attempt <= 5; attempt++) {
         System.out.println("Submitting payload:");
         System.out.println(body + "\n");
 
-        // ── Step 6: POST leaderboard once ─────────────────────────────────
+    
         HttpRequest submitReq = HttpRequest.newBuilder()
                 .uri(URI.create(BASE_URL + "/quiz/submit"))
                 .header("Content-Type", "application/json")
@@ -142,7 +136,7 @@ for (int attempt = 1; attempt <= 5; attempt++) {
         System.out.println("Submit Response (HTTP " + submitRes.statusCode() + "):");
         System.out.println(submitRes.body());
 
-        // Parse isCorrect from response
+      
         String responseBody = submitRes.body();
         boolean isCorrect = responseBody.contains("\"isCorrect\":true");
         System.out.println("\n" + (isCorrect
@@ -150,12 +144,11 @@ for (int attempt = 1; attempt <= 5; attempt++) {
                 : "❌ Submission incorrect — check your regNo and logic."));
     }
 
-    // ── Lightweight JSON parser for events array ───────────────────────────
-    // Parses: {"roundId":"R1","participant":"Alice","score":10}
+    
     private static List<Event> parseEvents(String json) {
         List<Event> events = new ArrayList<>();
 
-        // Find the "events" array content
+      
         int eventsStart = json.indexOf("\"events\"");
         if (eventsStart == -1) return events;
 
@@ -165,7 +158,7 @@ for (int attempt = 1; attempt <= 5; attempt++) {
 
         String eventsArray = json.substring(arrayStart + 1, arrayEnd);
 
-        // Match each event object {...}
+       
         Pattern objPattern   = Pattern.compile("\\{[^}]+\\}");
         Pattern roundPattern = Pattern.compile("\"roundId\"\\s*:\\s*\"([^\"]+)\"");
         Pattern partPattern  = Pattern.compile("\"participant\"\\s*:\\s*\"([^\"]+)\"");
@@ -186,7 +179,7 @@ for (int attempt = 1; attempt <= 5; attempt++) {
         return events;
     }
 
-    // ── Simple event data class ────────────────────────────────────────────
+    
     static class Event {
         String roundId, participant;
         int score;
